@@ -1,0 +1,226 @@
+import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:flutter/material.dart';
+import '../common/blocs/login_bloc.dart';
+import '../common/routes/view_routes.dart';
+import '../components/input_field_login.dart';
+import '../components/user_login_header.dart';
+import '../model/user_model.dart';
+
+import '../common/messages/messages.dart';
+import '../external/database/db_sql_lite.dart';
+
+class UpdateUser extends StatefulWidget {
+  //UserModel user;
+  // UpdateUser(this.user, {super.key});
+  const UpdateUser({super.key});
+
+  @override
+  State<UpdateUser> createState() => _UpdateUserFormState();
+}
+
+class _UpdateUserFormState extends State<UpdateUser> {
+  final _formKey = GlobalKey<FormState>();
+  final _userLoginController = TextEditingController();
+  final _userNameController = TextEditingController();
+  final _userEmailController = TextEditingController();
+  final _userPasswordController = TextEditingController();
+  final _userPasswordConfirmController = TextEditingController();
+  final _loginBloc = LoginBloc();
+  late final UserModel user;
+
+  @override
+  void didChangeDependencies() {
+    user = ModalRoute.of(context)!.settings.arguments as UserModel;
+    _getUserData(user);
+    super.didChangeDependencies();
+  }
+
+  _getUserData(UserModel user) async {
+    setState(() {
+      _userLoginController.text = user.userId;
+      _userNameController.text = user.userName;
+      _userEmailController.text = user.userEmail;
+      _userPasswordController.text = user.userPassword;
+      // _userPasswordConfirmController.text = user;
+    });
+  }
+
+  _updateUserData(BuildContext context) {
+    if (_formKey.currentState!.validate()) {
+      if (_userPasswordController.text.trim() !=
+          _userPasswordConfirmController.text.trim()) {
+        MessagesApp.showCustom(context, MessagesApp.errorPasswordMistach);
+        return 0;
+      }
+
+      UserModel userUpdated = UserModel(
+        userId: _userLoginController.text.trim(),
+        userName: _userNameController.text.trim(),
+        userEmail: _userEmailController.text.trim(),
+        userPassword: _userPasswordController.text.trim(),
+        userType: 'client'
+      );
+
+      final db = SqlLiteDb();
+      db.updateUser(userUpdated).then(
+        (value) {
+          AwesomeDialog(
+            context: context,
+            headerAnimationLoop: false,
+            dialogType: DialogType.success,
+            title: MessagesApp.successUserUpdate,
+            btnOkOnPress: () => Navigator.pop(context),
+            btnOkText: 'OK',
+          ).show();
+        },
+      ).catchError((error) {
+        AwesomeDialog(
+          context: context,
+          headerAnimationLoop: false,
+          dialogType: DialogType.error,
+          title: MessagesApp.errorUserNoUpdate,
+          btnCancelOnPress: () => Navigator.pop(context),
+          btnCancelText: 'OK',
+        ).show();
+      });
+    }
+  }
+
+  _deleteUserData(BuildContext context) {
+    AwesomeDialog(
+      context: context,
+      dialogType: DialogType.warning,
+      headerAnimationLoop: false,
+      // animType: AnimType.topSlide,
+      title: 'Confirma Exclusão???',
+      btnCancelOnPress: () => Navigator.pop(context),
+      btnOkText: 'Sim',
+      btnOkOnPress: () {
+        final db = SqlLiteDb();
+        db.deleteUser(_userLoginController.text.trim()).then(
+          (value) {
+            AwesomeDialog(
+              context: context,
+              headerAnimationLoop: false,
+              dialogType: DialogType.success,
+              title: MessagesApp.successUserDelete,
+              btnOkOnPress: () => Navigator.pushNamedAndRemoveUntil(
+                  context, RoutesApp.home, (Route<dynamic> route) => false),
+              btnOkText: 'OK',
+            ).show();
+          },
+        ).catchError((error) {
+          AwesomeDialog(
+            context: context,
+            headerAnimationLoop: false,
+            dialogType: DialogType.error,
+            title: MessagesApp.errorDefault,
+            btnCancelOnPress: () => Navigator.pop(context),
+            btnCancelText: 'OK',
+          ).show();
+        });
+      },
+      btnCancelText: 'Cancelar',
+    ).show();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Atualização de Usuário'),
+      ),
+      body: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(top: 20),
+          child: Center(
+            child: Column(
+              //mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                const UserLoginHeader('Atualização dos Dados'),
+                InputFieldLogin(
+                  hintName: 'login',
+                  icon: Icons.person,
+                  controller: _userLoginController,
+                  enableField: false,
+                  stream: _loginBloc.outLogin,
+                  onChanged: _loginBloc.changedLogin,
+                ),
+                InputFieldLogin(
+                  hintName: 'Nome',
+                  icon: Icons.person_2_outlined,
+                  controller: _userNameController,
+                  stream: _loginBloc.outName,
+                  onChanged: _loginBloc.changedName,
+                ),
+                InputFieldLogin(
+                  hintName: 'Email',
+                  icon: Icons.email,
+                  controller: _userEmailController,
+                  inputType: TextInputType.emailAddress,
+                  stream: _loginBloc.outEmail,
+                  onChanged: _loginBloc.changedEmail,
+                ),
+                InputFieldLogin(
+                  isObscured: true,
+                  hintName: 'Senha',
+                  icon: Icons.lock,
+                  controller: _userPasswordController,
+                  stream: _loginBloc.outPassword,
+                  onChanged: _loginBloc.changedPassword,
+                ),
+                InputFieldLogin(
+                  isObscured: true,
+                  hintName: 'Confirmação de Senha',
+                  controller: _userPasswordConfirmController,
+                  icon: Icons.lock,
+                  stream: _loginBloc.outPassword,
+                  onChanged: _loginBloc.changedPassword,
+                ),
+                Container(
+                  padding: const EdgeInsets.only(
+                    top: 30,
+                    left: 40,
+                    right: 40,
+                  ),
+                  width: double.infinity,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: <Widget>[
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => _updateUserData(context),
+                          style: ElevatedButton.styleFrom(
+                              shape: const StadiumBorder()),
+                          child: const Text(
+                            'Atualizar',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => _deleteUserData(context),
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.error,
+                              shape: const StadiumBorder()),
+                          child: const Text(
+                            'Deletar',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
