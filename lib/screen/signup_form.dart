@@ -142,14 +142,22 @@ class _SignUpState extends State<SignUp> {
                     right: 80,
                   ),
                   width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => signUp(context),
-                    style:
-                        ElevatedButton.styleFrom(shape: const StadiumBorder()),
-                    child: const Text(
-                      'Cadastrar',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                  child: StreamBuilder<bool>(
+                    stream: _loginBloc.outSubmitSingupValid,
+                    builder: (context, snapshot) {
+                      return ElevatedButton(
+                        onPressed: snapshot.hasData ? () => signUp(context) : null,
+                        style:
+                            ElevatedButton.styleFrom(
+                              shape: const StadiumBorder(),
+                              disabledBackgroundColor: Colors.blue.withAlpha(140)
+                            ),
+                        child: const Text(
+                          'Cadastrar',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      );
+                    }
                   ),
                 ),
               ],

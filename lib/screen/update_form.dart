@@ -189,14 +189,21 @@ class _UpdateUserFormState extends State<UpdateUser> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: <Widget>[
                       Expanded(
-                        child: ElevatedButton(
-                          onPressed: () => _updateUserData(context),
-                          style: ElevatedButton.styleFrom(
-                              shape: const StadiumBorder()),
-                          child: const Text(
-                            'Atualizar',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
+                        child: StreamBuilder<bool>(
+                          stream: _loginBloc.outSubmitSingupValid,
+                          builder: (context, snapshot) {
+                            return ElevatedButton(
+                              onPressed: snapshot.hasData ? () => _updateUserData(context) : null,
+                              style: ElevatedButton.styleFrom(
+                                shape: const StadiumBorder(),
+                                disabledBackgroundColor: Colors.blue.withAlpha(140)
+                              ),
+                              child: const Text(
+                                'Atualizar',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            );
+                          }
                         ),
                       ),
                       const SizedBox(width: 20),
