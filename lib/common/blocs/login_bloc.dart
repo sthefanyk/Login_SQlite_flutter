@@ -21,8 +21,12 @@ class LoginBloc extends BlocBase with LoginValidators {
     outLogin, outPassword, (a, b) => true
   );
 
-  Stream<bool> get outSubmitSingupValid => Rx.combineLatest5(
-    outLogin, outName, outEmail, outPassword, outPassword, (a, b, c, d, e) => true
+  Stream<bool> get outSubmitSingupValid => Rx.combineLatest4(
+    outLogin, outName, outEmail, outPassword, (a, b, c, d) => true
+  );
+
+  Stream<bool> get outSubmitUpdateValid => Rx.combineLatest3(
+    outName, outEmail, outPassword, (a, b, c) => true
   );
 
   Function(String) get changedLogin => _loginController.sink.add;

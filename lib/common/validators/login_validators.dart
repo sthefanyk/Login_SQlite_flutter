@@ -33,7 +33,7 @@ class LoginValidators {
     if (password.length > 3) {
       sink.add(password);
     } else {
-      sink.addError('Senha fraca!');
+      sink.addError('Senha deve conter pelo menos 4 caracteres!');
     }
   });
 }
